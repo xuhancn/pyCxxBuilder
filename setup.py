@@ -12,9 +12,6 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 def _build_installation_dependency():
     install_requires = []
-    install_requires.append("psutil")
-    install_requires.append("numpy")
-    install_requires.append("packaging")
     return install_requires
 
 ext_modules = []
