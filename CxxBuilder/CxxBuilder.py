@@ -7,7 +7,7 @@ IS_DARWIN = platform.system() == "Darwin"
 IS_WINDOWS = platform.system() == "Windows"
 
 
-class CxxBuilder:
+class BuildTarget:
     __CFLAGS = None
     __SOURCES = None
 
