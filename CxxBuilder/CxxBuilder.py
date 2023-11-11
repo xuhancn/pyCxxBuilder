@@ -18,6 +18,10 @@ def _create_if_dir_not_exist(path_dir):
             if exc.errno != errno.EEXIST:
                 raise RuntimeError("Fail to create path {}".format(path_dir))
             
+def _get_dir_name_from_path(file_path):
+    dir_name = os.path.dirname(file_path)
+    return dir_name
+            
 def _remove_dir(path_dir):
     if os.path.exists(path_dir):
         for root, dirs, files in os.walk(path_dir, topdown=False):
@@ -113,13 +117,14 @@ class BuildTarget:
             relative_path = _get_file_relative_path(project_root, src)
             output_obj = os.path.join(build_temp_dir, relative_path)
             output_obj+= self.get_object_ext()
-            _create_if_dir_not_exist(output_obj)
+            dir_name = _get_dir_name_from_path(output_obj)
+            _create_if_dir_not_exist(dir_name)
             # print(output_obj)
 
             obj_list.append(output_obj)
         return obj_list
 
-    def __link(self) -> bool:
+    def __link(self, obj_list: list[str]) -> bool:
         pass
 
     # Config
@@ -187,4 +192,6 @@ class BuildTarget:
                        sources=self.__sources, cmd_include_dirs=cmd_include_dirs, 
                        cmd_definations=cmd_definations, cmd_cflags=cmd_cflags, build_temp_dir=build_temp_dir)
         
-        print(obj_list)
+        self.__link(obj_list=obj_list)
+        
+
