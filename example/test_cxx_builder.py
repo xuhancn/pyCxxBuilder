@@ -9,16 +9,16 @@ def get_files_in_dir(dir_path):
 
     return file_list    
 
-def build_libxsmm():
+def build_mimalloc():
     curr_dir = os.path.dirname(os.path.abspath(__file__))
-    libxsmm_root = os.path.join(curr_dir, "third_party", "libxsmm")
+    project_root = os.path.join(curr_dir, "third_party", "mimalloc")
 
-    source_files = get_files_in_dir(os.path.join(libxsmm_root, "src"))
-    include_files = get_files_in_dir(os.path.join(libxsmm_root, "include"))
+    source_files = get_files_in_dir(os.path.join(project_root, "src"))
+    include_files = get_files_in_dir(os.path.join(project_root, "include"))
 
     cxx_target = cb.CxxBuilder.BuildTarget()
-    cxx_target.target("libxsmm", 
-                      project_root = libxsmm_root,
+    cxx_target.target("libmimalloc", 
+                      project_root = project_root,
                       sources = source_files, 
                       include_dirs= include_files,
                       #  build_directory = "~",
@@ -29,4 +29,4 @@ def build_libxsmm():
 
 
 if __name__=='__main__':
-    build_libxsmm()
+    build_mimalloc()
