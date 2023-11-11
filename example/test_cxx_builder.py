@@ -18,6 +18,7 @@ def build_libxsmm():
 
     cxx_target = cb.CxxBuilder.BuildTarget()
     cxx_target.target("libxsmm", 
+                      project_root = libxsmm_root,
                       sources = source_files, 
                       include_dirs= include_files,
                       #  build_directory = "~",
