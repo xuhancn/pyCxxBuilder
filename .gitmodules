@@ -1,3 +1,6 @@
 [submodule "example/third_party/libxsmm"]
 	path = example/third_party/libxsmm
 	url = https://github.com/libxsmm/libxsmm.git
+[submodule "example/third_party/mimalloc"]
+	path = example/third_party/mimalloc
+	url = https://github.com/microsoft/mimalloc.git
