@@ -1,5 +1,5 @@
 import platform
-
+import os
 
 # initialize variables for compilation
 __IS_LINUX = platform.system() == "Linux"
@@ -20,6 +20,7 @@ class BuildTarget:
     __is_shared = False
     __is_static = True
 
+    # File types
     def __get_shared_flag(self):
         SHARED_FLAG = '/DLL' if __IS_WINDOWS else '-shared'
         return SHARED_FLAG
@@ -38,7 +39,8 @@ class BuildTarget:
 
     def __init__(self) -> None:
         pass
-
+    
+    # Build
     def __prepare_build_parameters(self):
         cmd_include_dirs = [""]
         cmd_libraries = [""]
@@ -70,6 +72,7 @@ class BuildTarget:
     def __link(self) -> bool:
         pass
 
+    # Config
     def add_sources(self, sources: list[str]):
         self.__sources += sources
 
@@ -85,6 +88,7 @@ class BuildTarget:
     def add_ldflags(self, ldflags: list[str]):
         self.__LDFLAGS += ldflags
 
+    # Major
     def target(self, 
               name: str,
               sources: list[str],
@@ -111,5 +115,12 @@ class BuildTarget:
     def build(self):
         if self.__name is None:
             raise ValueError("Target name should not be None.")
+        
+        if self.__build_directory is None:
+            build_root = os.path.dirname(os.path.abspath(__file__))
+        else:
+            build_root = self.__build_directory
+
+        build_root = os.path.join(build_root, self.__name)
 
         cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags = self.__prepare_build_parameters()
