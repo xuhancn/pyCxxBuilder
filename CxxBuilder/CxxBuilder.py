@@ -65,6 +65,10 @@ class BuildTarget:
         SHARED_LIB_EXT = '.dll' if _IS_WINDOWS else '.so'
         return SHARED_LIB_EXT
     
+    def __get_static_flag(self):
+        STATIC_FLAG = '' if _IS_WINDOWS else '-static'
+        return STATIC_FLAG
+
     def get_static_lib_ext(self):
         STATIC_LIB_PREFIX = 'a' if _IS_WINDOWS else 'lib'
         return STATIC_LIB_PREFIX
