@@ -1,12 +1,37 @@
 import platform
 import os
+from pathlib import Path
+import errno
 
 # initialize variables for compilation
 __IS_LINUX = platform.system() == "Linux"
 __IS_DARWIN = platform.system() == "Darwin"
 __IS_WINDOWS = platform.system() == "Windows"
 
-__BUILD_TEMP_DIR = "CxxBuild"
+_BUILD_TEMP_DIR = "CxxBuild"
+
+def _create_if_dir_not_exist(path_dir):
+    if not os.path.exists(path_dir):
+        try:
+            Path(path_dir).mkdir(parents=True, exist_ok=True)
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise RuntimeError("Fail to create path {}".format(path_dir))
+            
+def _remove_dir(path_dir):
+    if os.path.exists(path_dir):
+        for root, dirs, files in os.walk(path_dir, topdown=False):
+            for name in files:
+                file_path = os.path.join(root, name)
+                os.remove(file_path)
+            for name in dirs:
+                dir_path = os.path.join(root, name)
+                os.rmdir(dir_path)
+        os.rmdir(path_dir)
+            
+def _check_if_file_exist(file_path):
+    check_file = os.path.isfile(file_path)
+    return check_file
 
 class BuildTarget:
     __name = None
@@ -36,6 +61,10 @@ class BuildTarget:
     def get_exec_ext(self):
         EXEC_EXT = '.exe' if __IS_WINDOWS else ''
         return EXEC_EXT
+    
+    def get_object_ext(self):
+        OBJ_EXT = '.obj' if __IS_WINDOWS else '.o'
+        return OBJ_EXT
 
     def __init__(self) -> None:
         pass
@@ -48,26 +77,32 @@ class BuildTarget:
         cmd_cflags = [""]
         cmd_ldflags = [""]
 
-        for inc in self.__include_dirs:
-            cmd_include_dirs.append(f"-I{inc} ")
+        if self.__include_dirs is not None:
+            for inc in self.__include_dirs:
+                cmd_include_dirs.append(f"-I{inc} ")
 
-        for lib in self.__libraries:
-            cmd_libraries.append(f"-L{inc} ")
+        if self.__libraries is not None:
+            for lib in self.__libraries:
+                cmd_libraries.append(f"-L{inc} ")
 
-        for defs in self.__definations:
-            cmd_definations.append(f"-D{defs} ")
+        if self.__definations is not None:
+            for defs in self.__definations:
+                cmd_definations.append(f"-D{defs} ")
 
-        for cflag in self.__CFLAGS:
-            cmd_cflags.append(f"-{cflag} ")
+        if self.__CFLAGS is not None:
+            for cflag in self.__CFLAGS:
+                cmd_cflags.append(f"-{cflag} ")
 
-        for ldflag in self.__LDFLAGS:
-            cmd_ldflags.append(f"-{ldflag} ")
+        if self.__LDFLAGS is not None:
+            for ldflag in self.__LDFLAGS:
+                cmd_ldflags.append(f"-{ldflag} ")
 
         return cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags
 
 
-    def __compile(self) -> bool:
-        pass
+    def __compile(self, sources: list[str], cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir) -> bool:
+        for src in sources:
+            print(src)
 
     def __link(self) -> bool:
         pass
@@ -114,7 +149,7 @@ class BuildTarget:
 
     def build(self):
         if self.__name is None:
-            raise ValueError("Target name should not be None.")
+            raise RuntimeError("Target name should not be None.")
         
         if self.__build_directory is None:
             build_root = os.path.dirname(os.path.abspath(__file__))
@@ -122,5 +157,10 @@ class BuildTarget:
             build_root = self.__build_directory
 
         build_root = os.path.join(build_root, self.__name)
+        build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
+        _create_if_dir_not_exist(build_root)
+        _create_if_dir_not_exist(build_temp_dir)
 
         cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags = self.__prepare_build_parameters()
+
+        self.__compile(self.__sources, cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir)
