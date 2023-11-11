@@ -2,9 +2,9 @@ import platform
 
 
 # initialize variables for compilation
-IS_LINUX = platform.system() == "Linux"
-IS_DARWIN = platform.system() == "Darwin"
-IS_WINDOWS = platform.system() == "Windows"
+__IS_LINUX = platform.system() == "Linux"
+__IS_DARWIN = platform.system() == "Darwin"
+__IS_WINDOWS = platform.system() == "Windows"
 
 
 class BuildTarget:
