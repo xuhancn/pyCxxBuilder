@@ -1,4 +1,4 @@
-import CxxBuilder as cxx
+import CxxBuilder as cb
 
-new_target = cxx.CxxTarget()
+new_target = cb.CxxTarget()
 new_target.build()
