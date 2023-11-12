@@ -2,7 +2,11 @@ import platform
 import os
 from pathlib import Path
 import errno
+import sys
+import subprocess
 from subprocess import check_call
+
+import shlex
 
 # initialize variables for compilation
 _IS_LINUX = platform.system() == "Linux"
@@ -50,6 +54,12 @@ def _get_file_relative_path(project_root, src_file):
     if relative_path is None:
         raise RuntimeError("source file {} is not belong to project {}".format(src_file, project_root))
     return relative_path
+
+def run_command_line(cmd_line, cwd):
+    cmd = shlex.split(cmd_line)
+    status = subprocess.call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
+    
+    return status
 
 class BuildTarget:
     __name = None
@@ -124,6 +134,7 @@ class BuildTarget:
 
 
     def __compile(self, project_root, sources: list[str], cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir):
+
         def _format_compile_cmd(compiler, src_file, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags):
             cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
             return cmd
@@ -140,6 +151,7 @@ class BuildTarget:
 
             compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
             print(compile_cmd)
+            run_command_line(compile_cmd, build_temp_dir)
 
             obj_list.append(output_obj)
         return obj_list
