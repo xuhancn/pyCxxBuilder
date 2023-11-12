@@ -2,6 +2,7 @@ import platform
 import os
 from pathlib import Path
 import errno
+from subprocess import check_call
 
 # initialize variables for compilation
 _IS_LINUX = platform.system() == "Linux"
@@ -9,6 +10,13 @@ _IS_DARWIN = platform.system() == "Darwin"
 _IS_WINDOWS = platform.system() == "Windows"
 
 _BUILD_TEMP_DIR = "CxxBuild"
+
+def _get_cxx_compiler():
+    if _IS_WINDOWS:
+        compiler = os.environ.get('CXX', 'cl')
+    else:
+        compiler = os.environ.get('CXX', 'c++')
+    return compiler
 
 def _create_if_dir_not_exist(path_dir):
     if not os.path.exists(path_dir):
@@ -86,44 +94,52 @@ class BuildTarget:
     
     # Build
     def __prepare_build_parameters(self):
-        cmd_include_dirs = []
-        cmd_libraries = []
-        cmd_definations = []
-        cmd_cflags = []
-        cmd_ldflags = []
+        cmd_include_dirs = ""
+        cmd_libraries = ""
+        cmd_definations = ""
+        cmd_cflags = ""
+        cmd_ldflags = ""
 
         if self.__include_dirs is not None:
             for inc in self.__include_dirs:
-                cmd_include_dirs.append(f"-I{inc} ")
+                cmd_include_dirs += (f"-I{inc} ")
 
         if self.__libraries is not None:
             for lib in self.__libraries:
-                cmd_libraries.append(f"-L{inc} ")
+                cmd_libraries += (f"-L{inc} ")
 
         if self.__definations is not None:
             for defs in self.__definations:
-                cmd_definations.append(f"-D{defs} ")
+                cmd_definations +=  (f"-D{defs} ")
 
         if self.__CFLAGS is not None:
             for cflag in self.__CFLAGS:
-                cmd_cflags.append(f"-{cflag} ")
+                cmd_cflags += (f"-{cflag} ")
 
         if self.__LDFLAGS is not None:
             for ldflag in self.__LDFLAGS:
-                cmd_ldflags.append(f"-{ldflag} ")
+                cmd_ldflags += (f"-{ldflag} ")
 
         return cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags
 
 
     def __compile(self, project_root, sources: list[str], cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir):
+        def _format_compile_cmd(compiler, src_file, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags):
+            cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
+            return cmd
+
+        compiler = _get_cxx_compiler()
         obj_list = []
         for src in sources:
             relative_path = _get_file_relative_path(project_root, src)
             output_obj = os.path.join(build_temp_dir, relative_path)
             output_obj+= self.get_object_ext()
-            dir_name = _get_dir_name_from_path(output_obj)
-            _create_if_dir_not_exist(dir_name)
-            # print(output_obj)
+
+            _dir_name = _get_dir_name_from_path(output_obj)
+            _create_if_dir_not_exist(_dir_name)
+
+            compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
+            print(compile_cmd)
 
             obj_list.append(output_obj)
         return obj_list
