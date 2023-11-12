@@ -68,6 +68,11 @@ def run_command_line(cmd_line, cwd=None):
     
     return status
 
+def _get_windows_runtime_libs():
+    return ["psapi.lib", "shell32.lib", "user32.lib", "advapi32.lib", "bcrypt.lib",
+            "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "shell32.lib", 
+            "ole32.lib", "oleaut32.lib", "uuid.lib", "comdlg32.lib", "advapi32.lib"]
+
 class BuildTarget:
     __name = None
     __project_root = None
