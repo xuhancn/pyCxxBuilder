@@ -165,7 +165,7 @@ class BuildTarget:
             obj_list.append(output_obj)
         return obj_list
 
-    def __link(self, obj_list: list[str]) -> bool:
+    def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
         pass
 
     # Config
@@ -250,7 +250,8 @@ class BuildTarget:
         else:
             file_ext = self.get_exec_ext()
 
-        target_file = f"{build_root}{self.__name}{file_ext}"
-        self.__link(obj_list=obj_list)
+        target_file = f"{self.__name}{file_ext}"
+        target_file = os.path.join(build_root, target_file)
+        self.__link(obj_list=obj_list, cmd_ldflags=cmd_ldflags, cmd_libraries=cmd_libraries, target_file=target_file)
         
 
