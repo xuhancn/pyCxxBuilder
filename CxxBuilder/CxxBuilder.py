@@ -121,7 +121,10 @@ class BuildTarget:
 
         if len(self.__include_dirs) != 0:
             for inc in self.__include_dirs:
-                cmd_include_dirs += (f"-I{inc} ")
+                if _IS_WINDOWS:
+                    cmd_include_dirs += (f"/I {inc} ")
+                else:
+                    cmd_include_dirs += (f"-I{inc} ")
 
         if len(self.__libraries) != 0:
             for lib in self.__libraries:
@@ -129,15 +132,24 @@ class BuildTarget:
 
         if len(self.__definations) != 0:
             for defs in self.__definations:
-                cmd_definations +=  (f"-D{defs} ")
+                if _IS_WINDOWS:
+                    cmd_definations +=  (f"/D {defs} ")
+                else:
+                    cmd_definations +=  (f"-D{defs} ")
 
         if len(self.__CFLAGS) != 0:
             for cflag in self.__CFLAGS:
-                cmd_cflags += (f"-{cflag} ")
+                if _IS_WINDOWS:
+                    cmd_cflags += (f"/{cflag} ")
+                else:
+                    cmd_cflags += (f"-{cflag} ")
 
         if len(self.__LDFLAGS) != 0:
             for ldflag in self.__LDFLAGS:
-                cmd_ldflags += (f"-{ldflag} ")
+                if _IS_WINDOWS:
+                    cmd_ldflags += (f"/{ldflag} ")
+                else:    
+                    cmd_ldflags += (f"-{ldflag} ")
 
         return cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags
 
