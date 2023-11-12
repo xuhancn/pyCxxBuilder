@@ -5,7 +5,7 @@ import errno
 import sys
 import subprocess
 from subprocess import check_call
-
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED
 import shlex
 
 _n_cores = os.cpu_count()
@@ -185,6 +185,12 @@ class BuildTarget:
 
         compiler = _get_cxx_compiler()
         obj_list = []
+
+        def _compile_worker(compile_cmd):
+            return run_command_line(compile_cmd)
+
+        executor = ThreadPoolExecutor(max_workers=_n_cores)
+        all_task = []
         for src in sources:
             relative_path = _get_file_relative_path(project_root, src)
             output_obj = os.path.join(build_temp_dir, relative_path)
@@ -194,10 +200,15 @@ class BuildTarget:
             _create_if_dir_not_exist(_dir_name)
 
             compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
-            print("!!! compile_cmd: ", compile_cmd)
-            run_command_line(compile_cmd, build_temp_dir)
+            # print("!!! compile_cmd: ", compile_cmd)
 
-            obj_list.append(output_obj)
+            all_task.append(executor.submit(_compile_worker, (compile_cmd)))
+            # run_command_line(compile_cmd)
+
+            #obj_list.append(output_obj)
+
+        wait(all_task, return_when=ALL_COMPLETED)
+
         return obj_list
 
     def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
