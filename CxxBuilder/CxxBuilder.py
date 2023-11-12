@@ -5,8 +5,10 @@ import errno
 import sys
 import subprocess
 from subprocess import check_call
-
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED
 import shlex
+
+_n_cores = os.cpu_count()
 
 # initialize variables for compilation
 _IS_LINUX = sys.platform.startswith('linux')
@@ -183,6 +185,13 @@ class BuildTarget:
 
         compiler = _get_cxx_compiler()
         obj_list = []
+
+        def _compile_worker(compile_cmd):
+            status = run_command_line(compile_cmd)
+            return status
+
+        executor = ThreadPoolExecutor(max_workers=_n_cores)
+        all_task = []
         for src in sources:
             relative_path = _get_file_relative_path(project_root, src)
             output_obj = os.path.join(build_temp_dir, relative_path)
@@ -193,9 +202,14 @@ class BuildTarget:
 
             compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
             print("!!! compile_cmd: ", compile_cmd)
-            run_command_line(compile_cmd, build_temp_dir)
+
+            # run_command_line(compile_cmd)
+            all_task.append(executor.submit(_compile_worker, (compile_cmd)))
 
             obj_list.append(output_obj)
+
+        wait(all_task, return_when=ALL_COMPLETED)
+
         return obj_list
 
     def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
@@ -281,7 +295,7 @@ class BuildTarget:
         if self.__is_shared:
             if self.__is_static:
                 file_ext = self.get_static_lib_ext()
-                self.add_ldflags([self.__get_shared_flag()])
+                # self.add_ldflags([self.__get_static_flag()])
             else:
                 file_ext = self.get_shared_lib_ext()
                 self.add_ldflags([self.__get_shared_flag()])
