@@ -14,13 +14,13 @@ def build_mimalloc():
     project_root = os.path.join(curr_dir, "third_party", "mimalloc")
 
     source_files = get_files_in_dir(os.path.join(project_root, "src"))
-    include_files = (os.path.join(project_root, "include"))
+    include_dirs = [os.path.join(project_root, "include"), os.path.join(project_root, "src")]
 
     cxx_target = cb.CxxBuilder.BuildTarget()
     cxx_target.target("libmimalloc", 
                       project_root = project_root,
                       sources = source_files, 
-                      include_dirs= [include_files,source_files]
+                      include_dirs= include_dirs
                       #  build_directory = "~",
                         )
     cxx_target.build()
