@@ -121,7 +121,8 @@ class BuildTarget:
         return OBJ_EXT
 
     def __init__(self) -> None:
-        pass
+        if _IS_MACOS:
+            print("Warning: Mac OS is not validated.\n")
     
     # Build
     def __prepare_build_parameters(self):
