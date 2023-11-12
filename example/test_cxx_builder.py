@@ -50,8 +50,5 @@ def build_mimalloc():
         cxx_target.add_cflags(["fPIC", "Wall"])
     cxx_target.build()
 
-    return
-
-
 if __name__=='__main__':
     build_mimalloc()
