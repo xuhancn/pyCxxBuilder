@@ -166,8 +166,8 @@ class BuildTarget:
     def add_libraries(self, libraries: list[str]):
         self.__libraries += libraries
 
-    def add_definations(self, definations: list[str]):
-        self.__definations += definations
+    def add_definations(self, definations: str):
+        self.__definations.append(definations)
 
     def add_cflags(self, cflags: list[str]):
         self.__CFLAGS += cflags
@@ -180,11 +180,11 @@ class BuildTarget:
               name: str,
               project_root: str,
               sources: list[str],
-              definations: list[str] = None,
-              include_dirs: list[str] = None,
-              cflags: list[str] = None,
-              ldflags: list[str] = None,
-              libraries: list[str] = None,
+              definations: list[str] = [],
+              include_dirs: list[str] = [],
+              cflags: list[str] = [],
+              ldflags: list[str] = [],
+              libraries: list[str] = [],
               build_directory: str = None,
               is_shared: bool = True,
               is_static: bool = True

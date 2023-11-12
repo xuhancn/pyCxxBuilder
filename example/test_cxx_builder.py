@@ -23,6 +23,8 @@ def build_mimalloc():
                       include_dirs= include_dirs
                       #  build_directory = "~",
                         )
+    cxx_target.add_definations("MI_MALLOC_OVERRIDE")
+    cxx_target.add_definations("MI_STATIC_LIB")
     cxx_target.build()
 
     return
