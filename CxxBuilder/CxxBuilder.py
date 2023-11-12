@@ -166,8 +166,9 @@ class BuildTarget:
     def add_libraries(self, libraries: list[str]):
         self.__libraries += libraries
 
-    def add_definations(self, definations: str):
-        self.__definations.append(definations)
+    def add_defination(self, defination: str, value:str = ""):
+        define = f"{defination}={value}" if value != "" else f"{defination}"
+        self.__definations.append(define)
 
     def add_cflags(self, cflags: list[str]):
         self.__CFLAGS += cflags
