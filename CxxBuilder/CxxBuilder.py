@@ -157,7 +157,11 @@ class BuildTarget:
     def __compile(self, project_root, sources: list[str], cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir):
 
         def _format_compile_cmd(compiler, src_file, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags):
-            cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
+            if _IS_WINDOWS:
+                # https://stackoverflow.com/questions/36472760/how-to-create-obj-file-using-cl-exe
+                cmd = f"{compiler} /c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} /Fo {output_obj}"
+            else:
+                cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
             return cmd
 
         compiler = _get_cxx_compiler()
@@ -171,7 +175,7 @@ class BuildTarget:
             _create_if_dir_not_exist(_dir_name)
 
             compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
-            print(compile_cmd)
+            print("!!! compile_cmd: ", compile_cmd)
             run_command_line(compile_cmd, build_temp_dir)
 
             obj_list.append(output_obj)
@@ -179,13 +183,18 @@ class BuildTarget:
 
     def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
         def _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
-            cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+            if _IS_WINDOWS:
+                # https://stackoverflow.com/questions/2727187/creating-dll-and-lib-files-with-the-vc-command-line
+                cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} /OUT {target_file}"
+            else:
+                cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
             return cmd
         
         compiler = _get_cxx_compiler()
         obj_list_str = shlex.join(obj_list)
 
         link_cmd = _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
+        print("!!! link cmd: ", link_cmd)
         run_command_line(link_cmd)
 
     # Config
