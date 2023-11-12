@@ -159,7 +159,9 @@ class BuildTarget:
         def _format_compile_cmd(compiler, src_file, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags):
             if _IS_WINDOWS:
                 # https://stackoverflow.com/questions/36472760/how-to-create-obj-file-using-cl-exe
-                cmd = f"{compiler} /c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} /Fo {output_obj}"
+                output_dir = _get_dir_name_from_path(output_obj)
+                _create_if_dir_not_exist(output_dir)
+                cmd = f"{compiler} /c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} /Fo{output_dir}"
                 cmd = cmd.replace("\\", "\\\\")
             else:
                 cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
