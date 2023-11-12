@@ -22,6 +22,13 @@ def _get_cxx_compiler():
         compiler = os.environ.get('CXX', 'c++')
     return compiler
 
+def _get_cxx_linker():
+    if _IS_WINDOWS:
+        compiler = os.environ.get('CXX', 'link')
+    else:
+        compiler = os.environ.get('CXX', 'c++')
+    return compiler
+
 def _create_if_dir_not_exist(path_dir):
     if not os.path.exists(path_dir):
         try:
@@ -60,6 +67,11 @@ def run_command_line(cmd_line, cwd=None):
     status = subprocess.call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
     
     return status
+
+def _get_windows_runtime_libs():
+    return ["psapi", "shell32", "user32", "advapi32", "bcrypt",
+            "kernel32", "user32", "gdi32", "winspool", "shell32", 
+            "ole32", "oleaut32", "uuid", "comdlg32", "advapi32"]
 
 class BuildTarget:
     __name = None
@@ -121,23 +133,38 @@ class BuildTarget:
 
         if len(self.__include_dirs) != 0:
             for inc in self.__include_dirs:
-                cmd_include_dirs += (f"-I{inc} ")
+                if _IS_WINDOWS:
+                    cmd_include_dirs += (f"/I {inc} ")
+                else:
+                    cmd_include_dirs += (f"-I{inc} ")
 
         if len(self.__libraries) != 0:
             for lib in self.__libraries:
-                cmd_libraries += (f"-L{inc} ")
+                if _IS_WINDOWS:
+                    cmd_libraries += (f"{lib}.lib ")
+                else:
+                    cmd_libraries += (f"-L{lib} ")
 
         if len(self.__definations) != 0:
             for defs in self.__definations:
-                cmd_definations +=  (f"-D{defs} ")
+                if _IS_WINDOWS:
+                    cmd_definations +=  (f"/D {defs} ")
+                else:
+                    cmd_definations +=  (f"-D{defs} ")
 
         if len(self.__CFLAGS) != 0:
             for cflag in self.__CFLAGS:
-                cmd_cflags += (f"-{cflag} ")
+                if _IS_WINDOWS:
+                    cmd_cflags += (f"/{cflag} ")
+                else:
+                    cmd_cflags += (f"-{cflag} ")
 
         if len(self.__LDFLAGS) != 0:
             for ldflag in self.__LDFLAGS:
-                cmd_ldflags += (f"-{ldflag} ")
+                if _IS_WINDOWS:
+                    cmd_ldflags += (f"/{ldflag} ")
+                else:    
+                    cmd_ldflags += (f"-{ldflag} ")
 
         return cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags
 
@@ -145,7 +172,12 @@ class BuildTarget:
     def __compile(self, project_root, sources: list[str], cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir):
 
         def _format_compile_cmd(compiler, src_file, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags):
-            cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
+            if _IS_WINDOWS:
+                # https://stackoverflow.com/questions/36472760/how-to-create-obj-file-using-cl-exe
+                cmd = f"{compiler} /c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} /Fo{output_obj}"
+                cmd = cmd.replace("\\", "\\\\")
+            else:
+                cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
             return cmd
 
         compiler = _get_cxx_compiler()
@@ -159,21 +191,27 @@ class BuildTarget:
             _create_if_dir_not_exist(_dir_name)
 
             compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
-            print(compile_cmd)
+            print("!!! compile_cmd: ", compile_cmd)
             run_command_line(compile_cmd, build_temp_dir)
 
             obj_list.append(output_obj)
         return obj_list
 
     def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
-        def _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
-            cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+        def _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
+            if _IS_WINDOWS:
+                # https://stackoverflow.com/questions/2727187/creating-dll-and-lib-files-with-the-vc-command-line
+                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} /OUT:{target_file}"
+                cmd = cmd.replace("\\", "\\\\")
+            else:
+                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
             return cmd
         
-        compiler = _get_cxx_compiler()
+        linker = _get_cxx_linker()
         obj_list_str = shlex.join(obj_list)
 
-        link_cmd = _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
+        link_cmd = _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
+        print("!!! link cmd: ", link_cmd)
         run_command_line(link_cmd)
 
     # Config
@@ -248,6 +286,9 @@ class BuildTarget:
                 self.add_ldflags([self.__get_shared_flag()])
         else:
             file_ext = self.get_exec_ext()
+
+        if _IS_WINDOWS:
+            self.add_libraries(_get_windows_runtime_libs())
 
         build_root = os.path.join(build_root, self.__name)
         build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
