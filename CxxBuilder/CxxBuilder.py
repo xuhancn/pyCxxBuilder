@@ -9,14 +9,14 @@ from subprocess import check_call
 import shlex
 
 # initialize variables for compilation
-IS_LINUX = platform.system() == "Linux"
-IS_DARWIN = platform.system() == "Darwin"
-IS_WINDOWS = platform.system() == "Windows"
+_IS_LINUX = platform.system() == "Linux"
+_IS_DARWIN = platform.system() == "Darwin"
+_IS_WINDOWS = platform.system() == "Windows"
 
 _BUILD_TEMP_DIR = "CxxBuild"
 
 def _get_cxx_compiler():
-    if IS_WINDOWS:
+    if _IS_WINDOWS:
         compiler = os.environ.get('CXX', 'cl')
     else:
         compiler = os.environ.get('CXX', 'c++')
@@ -73,30 +73,39 @@ class BuildTarget:
     __build_directory = None
     __is_shared = False
     __is_static = True
+    # OS info
+    def is_windows(self):
+        return _IS_WINDOWS
+    
+    def is_linux(self):
+        return _IS_LINUX
+    
+    def is_mac_os(self):
+        return _IS_DARWIN
 
     # File types
     def __get_shared_flag(self):
-        SHARED_FLAG = '/DLL' if IS_WINDOWS else '-shared'
+        SHARED_FLAG = '/DLL' if _IS_WINDOWS else '-shared'
         return SHARED_FLAG
 
     def get_shared_lib_ext(self):
-        SHARED_LIB_EXT = '.dll' if IS_WINDOWS else '.so'
+        SHARED_LIB_EXT = '.dll' if _IS_WINDOWS else '.so'
         return SHARED_LIB_EXT
     
     def __get_static_flag(self):
-        STATIC_FLAG = '' if IS_WINDOWS else '-static'
+        STATIC_FLAG = '' if _IS_WINDOWS else '-static'
         return STATIC_FLAG
 
     def get_static_lib_ext(self):
-        STATIC_LIB_PREFIX = 'a' if IS_WINDOWS else 'lib'
+        STATIC_LIB_PREFIX = 'a' if _IS_WINDOWS else 'lib'
         return STATIC_LIB_PREFIX
 
     def get_exec_ext(self):
-        EXEC_EXT = '.exe' if IS_WINDOWS else ''
+        EXEC_EXT = '.exe' if _IS_WINDOWS else ''
         return EXEC_EXT
     
     def get_object_ext(self):
-        OBJ_EXT = '.obj' if IS_WINDOWS else '.o'
+        OBJ_EXT = '.obj' if _IS_WINDOWS else '.o'
         return OBJ_EXT
 
     def __init__(self) -> None:
@@ -161,20 +170,28 @@ class BuildTarget:
 
     # Config
     def add_sources(self, sources: list[str]):
-        self.__sources += sources
+        for i in sources:
+            self.__sources.append(i)
 
     def add_libraries(self, libraries: list[str]):
-        self.__libraries += libraries
+        for i in libraries:
+            self.__libraries.append(i)
+
+    def add_definations(self, definations: list[str]):
+        for i in definations:
+            self.__definations.append(i)
 
     def add_defination(self, defination: str, value:str = ""):
         define = f"{defination}={value}" if value != "" else f"{defination}"
         self.__definations.append(define)
 
     def add_cflags(self, cflags: list[str]):
-        self.__CFLAGS += cflags
+        for i in cflags:
+            self.__CFLAGS.append(i)
 
     def add_ldflags(self, ldflags: list[str]):
-        self.__LDFLAGS += ldflags
+        for i in ldflags:
+            self.__LDFLAGS.append(i)
 
     # Major
     def target(self, 

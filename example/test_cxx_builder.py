@@ -46,6 +46,8 @@ def build_mimalloc():
                         )
     # cxx_target.add_definations("MI_MALLOC_OVERRIDE")
     cxx_target.add_defination("MI_STATIC_LIB")
+    if cxx_target.is_linux():
+        cxx_target.add_cflags(["-fPIC", "-Wall"])
     cxx_target.build()
 
     return
