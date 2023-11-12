@@ -110,23 +110,23 @@ class BuildTarget:
         cmd_cflags = ""
         cmd_ldflags = ""
 
-        if self.__include_dirs is not None:
+        if len(self.__include_dirs) != 0:
             for inc in self.__include_dirs:
                 cmd_include_dirs += (f"-I{inc} ")
 
-        if self.__libraries is not None:
+        if len(self.__libraries) != 0:
             for lib in self.__libraries:
                 cmd_libraries += (f"-L{inc} ")
 
-        if self.__definations is not None:
+        if len(self.__definations) != 0:
             for defs in self.__definations:
                 cmd_definations +=  (f"-D{defs} ")
 
-        if self.__CFLAGS is not None:
+        if len(self.__CFLAGS) != 0:
             for cflag in self.__CFLAGS:
                 cmd_cflags += (f"-{cflag} ")
 
-        if self.__LDFLAGS is not None:
+        if len(self.__LDFLAGS) != 0:
             for ldflag in self.__LDFLAGS:
                 cmd_ldflags += (f"-{ldflag} ")
 
