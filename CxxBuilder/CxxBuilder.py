@@ -22,6 +22,13 @@ def _get_cxx_compiler():
         compiler = os.environ.get('CXX', 'c++')
     return compiler
 
+def _get_cxx_linker():
+    if _IS_WINDOWS:
+        compiler = os.environ.get('CXX', 'link')
+    else:
+        compiler = os.environ.get('CXX', 'c++')
+    return compiler
+
 def _create_if_dir_not_exist(path_dir):
     if not os.path.exists(path_dir):
         try:
@@ -183,19 +190,19 @@ class BuildTarget:
         return obj_list
 
     def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
-        def _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
+        def _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
             if _IS_WINDOWS:
                 # https://stackoverflow.com/questions/2727187/creating-dll-and-lib-files-with-the-vc-command-line
-                cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} /OUT {target_file}"
+                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} /OUT:{target_file}"
                 cmd = cmd.replace("\\", "\\\\")
             else:
-                cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
             return cmd
         
-        compiler = _get_cxx_compiler()
+        linker = _get_cxx_linker()
         obj_list_str = shlex.join(obj_list)
 
-        link_cmd = _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
+        link_cmd = _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
         print("!!! link cmd: ", link_cmd)
         run_command_line(link_cmd)
 
