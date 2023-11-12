@@ -201,10 +201,10 @@ class BuildTarget:
             _create_if_dir_not_exist(_dir_name)
 
             compile_cmd = _format_compile_cmd(compiler, src, output_obj, cmd_include_dirs, cmd_definations, cmd_cflags)
-            # print("!!! compile_cmd: ", compile_cmd)
+            print("!!! compile_cmd: ", compile_cmd)
 
-            all_task.append(executor.submit(_compile_worker, (compile_cmd)))
             # run_command_line(compile_cmd)
+            all_task.append(executor.submit(_compile_worker, (compile_cmd)))
 
             obj_list.append(output_obj)
 
@@ -295,7 +295,7 @@ class BuildTarget:
         if self.__is_shared:
             if self.__is_static:
                 file_ext = self.get_static_lib_ext()
-                self.add_ldflags([self.__get_static_flag()])
+                self.add_ldflags([self.__get_shared_flag()])
             else:
                 file_ext = self.get_shared_lib_ext()
                 self.add_ldflags([self.__get_shared_flag()])
