@@ -97,7 +97,7 @@ class BuildTarget:
         return STATIC_FLAG
 
     def get_static_lib_ext(self):
-        STATIC_LIB_PREFIX = 'a' if _IS_WINDOWS else 'lib'
+        STATIC_LIB_PREFIX = '.lib' if _IS_WINDOWS else '.a'
         return STATIC_LIB_PREFIX
 
     def get_exec_ext(self):
@@ -242,6 +242,15 @@ class BuildTarget:
                        sources=self.__sources, cmd_include_dirs=cmd_include_dirs, 
                        cmd_definations=cmd_definations, cmd_cflags=cmd_cflags, build_temp_dir=build_temp_dir)
         
+        if self.__is_shared:
+            if self.__is_static:
+                file_ext = self.get_static_lib_ext()
+            else:
+                file_ext = self.get_shared_lib_ext()
+        else:
+            file_ext = self.get_exec_ext()
+
+        target_file = f"{build_root}{self.__name}{file_ext}"
         self.__link(obj_list=obj_list)
         
 
