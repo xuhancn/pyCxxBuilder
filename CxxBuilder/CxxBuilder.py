@@ -187,7 +187,8 @@ class BuildTarget:
         obj_list = []
 
         def _compile_worker(compile_cmd):
-            return run_command_line(compile_cmd)
+            status = run_command_line(compile_cmd)
+            return status
 
         executor = ThreadPoolExecutor(max_workers=_n_cores)
         all_task = []
@@ -205,7 +206,7 @@ class BuildTarget:
             all_task.append(executor.submit(_compile_worker, (compile_cmd)))
             # run_command_line(compile_cmd)
 
-            #obj_list.append(output_obj)
+            obj_list.append(output_obj)
 
         wait(all_task, return_when=ALL_COMPLETED)
 
