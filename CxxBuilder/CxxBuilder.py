@@ -55,7 +55,7 @@ def _get_file_relative_path(project_root, src_file):
         raise RuntimeError("source file {} is not belong to project {}".format(src_file, project_root))
     return relative_path
 
-def run_command_line(cmd_line, cwd):
+def run_command_line(cmd_line, cwd=None):
     cmd = shlex.split(cmd_line)
     status = subprocess.call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
     
@@ -85,7 +85,7 @@ class BuildTarget:
 
     # File types
     def __get_shared_flag(self):
-        SHARED_FLAG = '/DLL' if _IS_WINDOWS else '-shared'
+        SHARED_FLAG = 'DLL' if _IS_WINDOWS else 'shared'
         return SHARED_FLAG
 
     def get_shared_lib_ext(self):
@@ -93,7 +93,7 @@ class BuildTarget:
         return SHARED_LIB_EXT
     
     def __get_static_flag(self):
-        STATIC_FLAG = '' if _IS_WINDOWS else '-static'
+        STATIC_FLAG = '' if _IS_WINDOWS else 'static'
         return STATIC_FLAG
 
     def get_static_lib_ext(self):
@@ -166,7 +166,15 @@ class BuildTarget:
         return obj_list
 
     def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
-        pass
+        def _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
+            cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+            return cmd
+        
+        compiler = _get_cxx_compiler()
+        obj_list_str = shlex.join(obj_list)
+
+        link_cmd = _format_link_cmd(compiler, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
+        run_command_line(link_cmd)
 
     # Config
     def add_sources(self, sources: list[str]):
@@ -231,6 +239,16 @@ class BuildTarget:
         else:
             build_root = self.__build_directory
 
+        if self.__is_shared:
+            if self.__is_static:
+                file_ext = self.get_static_lib_ext()
+                self.add_ldflags([self.__get_shared_flag()])
+            else:
+                file_ext = self.get_shared_lib_ext()
+                self.add_ldflags([self.__get_shared_flag()])
+        else:
+            file_ext = self.get_exec_ext()
+
         build_root = os.path.join(build_root, self.__name)
         build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
         _create_if_dir_not_exist(build_root)
@@ -241,14 +259,6 @@ class BuildTarget:
         obj_list = self.__compile(project_root = self.__project_root, 
                        sources=self.__sources, cmd_include_dirs=cmd_include_dirs, 
                        cmd_definations=cmd_definations, cmd_cflags=cmd_cflags, build_temp_dir=build_temp_dir)
-        
-        if self.__is_shared:
-            if self.__is_static:
-                file_ext = self.get_static_lib_ext()
-            else:
-                file_ext = self.get_shared_lib_ext()
-        else:
-            file_ext = self.get_exec_ext()
 
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
