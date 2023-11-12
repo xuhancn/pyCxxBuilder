@@ -160,6 +160,7 @@ class BuildTarget:
             if _IS_WINDOWS:
                 # https://stackoverflow.com/questions/36472760/how-to-create-obj-file-using-cl-exe
                 cmd = f"{compiler} /c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} /Fo {output_obj}"
+                cmd = cmd.replace("\\", "\\\\")
             else:
                 cmd = f"{compiler} -c {src_file} {cmd_include_dirs} {cmd_definations} {cmd_cflags} -o {output_obj}"
             return cmd
@@ -186,6 +187,7 @@ class BuildTarget:
             if _IS_WINDOWS:
                 # https://stackoverflow.com/questions/2727187/creating-dll-and-lib-files-with-the-vc-command-line
                 cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} /OUT {target_file}"
+                cmd = cmd.replace("\\", "\\\\")
             else:
                 cmd = f"{compiler} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
             return cmd
