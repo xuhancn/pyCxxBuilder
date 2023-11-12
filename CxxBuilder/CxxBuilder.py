@@ -69,9 +69,9 @@ def run_command_line(cmd_line, cwd=None):
     return status
 
 def _get_windows_runtime_libs():
-    return ["psapi.lib", "shell32.lib", "user32.lib", "advapi32.lib", "bcrypt.lib",
-            "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "shell32.lib", 
-            "ole32.lib", "oleaut32.lib", "uuid.lib", "comdlg32.lib", "advapi32.lib"]
+    return ["psapi", "shell32", "user32", "advapi32", "bcrypt",
+            "kernel32", "user32", "gdi32", "winspool", "shell32", 
+            "ole32", "oleaut32", "uuid", "comdlg32", "advapi32"]
 
 class BuildTarget:
     __name = None
@@ -140,7 +140,10 @@ class BuildTarget:
 
         if len(self.__libraries) != 0:
             for lib in self.__libraries:
-                cmd_libraries += (f"-L{inc} ")
+                if _IS_WINDOWS:
+                    cmd_libraries += (f"{lib}.lib ")
+                else:
+                    cmd_libraries += (f"-L{lib} ")
 
         if len(self.__definations) != 0:
             for defs in self.__definations:
@@ -283,6 +286,9 @@ class BuildTarget:
                 self.add_ldflags([self.__get_shared_flag()])
         else:
             file_ext = self.get_exec_ext()
+
+        if _IS_WINDOWS:
+            self.add_libraries(_get_windows_runtime_libs())
 
         build_root = os.path.join(build_root, self.__name)
         build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
