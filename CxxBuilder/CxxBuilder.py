@@ -295,7 +295,7 @@ class BuildTarget:
         if self.__is_shared:
             if self.__is_static:
                 file_ext = self.get_static_lib_ext()
-                self.add_ldflags([self.__get_shared_flag()])
+                # self.add_ldflags([self.__get_static_flag()])
             else:
                 file_ext = self.get_shared_lib_ext()
                 self.add_ldflags([self.__get_shared_flag()])

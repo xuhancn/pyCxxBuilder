@@ -41,8 +41,9 @@ def build_mimalloc():
     cxx_target.target("libmimalloc", 
                       project_root = project_root,
                       sources = source_files, 
-                      include_dirs= include_dirs
+                      include_dirs= include_dirs,
                       #  build_directory = "~",
+                      is_static=False
                         )
     # cxx_target.add_definations("MI_MALLOC_OVERRIDE")
     cxx_target.add_defination("MI_STATIC_LIB")
