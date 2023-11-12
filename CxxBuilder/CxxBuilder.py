@@ -9,9 +9,9 @@ from subprocess import check_call
 import shlex
 
 # initialize variables for compilation
-_IS_LINUX = platform.system() == "Linux"
-_IS_DARWIN = platform.system() == "Darwin"
-_IS_WINDOWS = platform.system() == "Windows"
+_IS_LINUX = sys.platform.startswith('linux')
+_IS_MACOS = sys.platform.startswith('darwin')
+_IS_WINDOWS = sys.platform == 'win32'
 
 _BUILD_TEMP_DIR = "CxxBuild"
 
@@ -93,7 +93,7 @@ class BuildTarget:
         return _IS_LINUX
     
     def is_mac_os(self):
-        return _IS_DARWIN
+        return _IS_MACOS
 
     # File types
     def __get_shared_flag(self):
