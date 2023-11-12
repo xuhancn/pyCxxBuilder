@@ -9,14 +9,14 @@ from subprocess import check_call
 import shlex
 
 # initialize variables for compilation
-_IS_LINUX = platform.system() == "Linux"
-_IS_DARWIN = platform.system() == "Darwin"
-_IS_WINDOWS = platform.system() == "Windows"
+IS_LINUX = platform.system() == "Linux"
+IS_DARWIN = platform.system() == "Darwin"
+IS_WINDOWS = platform.system() == "Windows"
 
 _BUILD_TEMP_DIR = "CxxBuild"
 
 def _get_cxx_compiler():
-    if _IS_WINDOWS:
+    if IS_WINDOWS:
         compiler = os.environ.get('CXX', 'cl')
     else:
         compiler = os.environ.get('CXX', 'c++')
@@ -76,27 +76,27 @@ class BuildTarget:
 
     # File types
     def __get_shared_flag(self):
-        SHARED_FLAG = '/DLL' if _IS_WINDOWS else '-shared'
+        SHARED_FLAG = '/DLL' if IS_WINDOWS else '-shared'
         return SHARED_FLAG
 
     def get_shared_lib_ext(self):
-        SHARED_LIB_EXT = '.dll' if _IS_WINDOWS else '.so'
+        SHARED_LIB_EXT = '.dll' if IS_WINDOWS else '.so'
         return SHARED_LIB_EXT
     
     def __get_static_flag(self):
-        STATIC_FLAG = '' if _IS_WINDOWS else '-static'
+        STATIC_FLAG = '' if IS_WINDOWS else '-static'
         return STATIC_FLAG
 
     def get_static_lib_ext(self):
-        STATIC_LIB_PREFIX = 'a' if _IS_WINDOWS else 'lib'
+        STATIC_LIB_PREFIX = 'a' if IS_WINDOWS else 'lib'
         return STATIC_LIB_PREFIX
 
     def get_exec_ext(self):
-        EXEC_EXT = '.exe' if _IS_WINDOWS else ''
+        EXEC_EXT = '.exe' if IS_WINDOWS else ''
         return EXEC_EXT
     
     def get_object_ext(self):
-        OBJ_EXT = '.obj' if _IS_WINDOWS else '.o'
+        OBJ_EXT = '.obj' if IS_WINDOWS else '.o'
         return OBJ_EXT
 
     def __init__(self) -> None:
