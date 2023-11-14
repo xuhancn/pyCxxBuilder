@@ -26,10 +26,10 @@ def _get_cxx_compiler():
 
 def _get_cxx_linker():
     if _IS_WINDOWS:
-        compiler = os.environ.get('CXX', 'link')
+        linker = os.environ.get('LD', 'link')
     else:
-        compiler = os.environ.get('CXX', 'ld')
-    return compiler
+        linker = os.environ.get('LD', 'ld')
+    return linker
 
 def _create_if_dir_not_exist(path_dir):
     if not os.path.exists(path_dir):
