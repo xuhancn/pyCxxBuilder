@@ -319,5 +319,5 @@ class BuildTarget:
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
         self.__link(obj_list=obj_list, cmd_ldflags=cmd_ldflags, cmd_libraries=cmd_libraries, target_file=target_file)
-        
 
+        _remove_dir(build_temp_dir)
