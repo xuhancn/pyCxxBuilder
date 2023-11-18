@@ -280,7 +280,7 @@ class BuildTarget:
         self.__is_shared = is_shared
         self.__is_static = is_static
 
-    def build_one_step(self):
+    def get_build_cmd(self):
         if self.__name is None:
             raise RuntimeError("target name should not be None.")
 
@@ -300,9 +300,9 @@ class BuildTarget:
 
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
-        build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
+        
         _create_if_dir_not_exist(build_root)
-        _create_if_dir_not_exist(build_temp_dir)
+        
         print("target_file: ",target_file)
 
         compiler = _get_cxx_compiler()
@@ -322,8 +322,17 @@ class BuildTarget:
         build_cmd = format_build_command(compiler=compiler, src_file=self.__sources, cmd_include_dirs=cmd_include_dirs, 
                                         cmd_definations=cmd_definations, cmd_cflags=cmd_cflags, cmd_ldflags=cmd_ldflags,
                                         cmd_libraries=cmd_libraries, target_file=target_file)
-        print(build_cmd)
+        return build_cmd
 
+    def build_one_step(self):
+        if self.__build_directory is None:
+            build_root = os.path.dirname(os.path.abspath(__file__))
+        else:
+            build_root = self.__build_directory        
+        build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
+        _create_if_dir_not_exist(build_temp_dir)
+
+        build_cmd = self.get_build_cmd()
         run_command_line(build_cmd, cwd=build_temp_dir)
         _remove_dir(build_temp_dir)
 
