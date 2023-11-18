@@ -280,6 +280,38 @@ class BuildTarget:
         self.__is_shared = is_shared
         self.__is_static = is_static
 
+    def build_one_step(self):
+        if self.__name is None:
+            raise RuntimeError("target name should not be None.")
+
+        if self.__build_directory is None:
+            build_root = os.path.dirname(os.path.abspath(__file__))
+        else:
+            build_root = self.__build_directory       
+
+        if self.__is_shared:
+            file_ext = self.get_shared_lib_ext()
+            self.add_ldflags([self.__get_shared_flag()])
+        else:
+            file_ext = self.get_exec_ext()
+
+        target_file = f"{self.__name}{file_ext}"
+        target_file = os.path.join(build_root, target_file)
+
+        compiler = _get_cxx_compiler()
+        cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags = self.__prepare_build_parameters()
+
+        def format_build_command(compiler, src_file, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, target_file):
+            if _IS_WINDOWS:
+                cmd = f""
+            else:
+                cmd = f"{compiler} {cmd_include_dirs} {' '.join(src_file)} {cmd_definations} {cmd_cflags} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+            return cmd
+        
+        build_cmd = format_build_command(compiler, self.__sources, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, target_file)
+
+        run_command_line(build_cmd)
+
     def build(self):
         if self.__name is None:
             raise RuntimeError("target name should not be None.")
