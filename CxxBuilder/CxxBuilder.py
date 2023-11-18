@@ -300,7 +300,9 @@ class BuildTarget:
 
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
+        build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
         _create_if_dir_not_exist(build_root)
+        _create_if_dir_not_exist(build_temp_dir)
         print("target_file: ",target_file)
 
         compiler = _get_cxx_compiler()
@@ -322,7 +324,8 @@ class BuildTarget:
                                         cmd_libraries=cmd_libraries, target_file=target_file)
         print(build_cmd)
 
-        run_command_line(build_cmd)
+        run_command_line(build_cmd, cwd=build_temp_dir)
+        _remove_dir(build_temp_dir)
 
     def build(self):
         if self.__name is None:
