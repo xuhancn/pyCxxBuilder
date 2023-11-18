@@ -49,7 +49,8 @@ def build_mimalloc():
     cxx_target.add_defination("MI_STATIC_LIB")
     if cxx_target.is_linux():
         cxx_target.add_cflags(["fPIC", "Wall"])
-    cxx_target.build()
+    cxx_target.build_one_step()
+    # cxx_target.build()
 
 if __name__=='__main__':
     build_mimalloc()
