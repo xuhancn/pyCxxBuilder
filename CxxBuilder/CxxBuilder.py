@@ -295,22 +295,37 @@ class BuildTarget:
         else:
             file_ext = self.get_exec_ext()
 
+        if _IS_WINDOWS:
+            self.add_libraries(_get_windows_runtime_libs())
+
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
+        build_temp_dir = os.path.join(build_root, _BUILD_TEMP_DIR)
+        _create_if_dir_not_exist(build_root)
+        _create_if_dir_not_exist(build_temp_dir)
+        print("target_file: ",target_file)
 
         compiler = _get_cxx_compiler()
         cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags = self.__prepare_build_parameters()
 
         def format_build_command(compiler, src_file, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, target_file):
             if _IS_WINDOWS:
-                cmd = f""
+                # https://learn.microsoft.com/en-us/cpp/build/walkthrough-compile-a-c-program-on-the-command-line?view=msvc-1704
+                # https://stackoverflow.com/a/31566153 
+                srcs = ' '.join(src_file)
+                cmd = f"{compiler} {cmd_include_dirs} {cmd_definations} {cmd_cflags} {srcs} {cmd_ldflags} {cmd_libraries} /LD /Fe{target_file}"
+                cmd = cmd.replace("\\", "\\\\")
             else:
                 cmd = f"{compiler} {cmd_include_dirs} {' '.join(src_file)} {cmd_definations} {cmd_cflags} {cmd_ldflags} {cmd_libraries} -o {target_file}"
             return cmd
         
-        build_cmd = format_build_command(compiler, self.__sources, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, target_file)
+        build_cmd = format_build_command(compiler=compiler, src_file=self.__sources, cmd_include_dirs=cmd_include_dirs, 
+                                        cmd_definations=cmd_definations, cmd_cflags=cmd_cflags, cmd_ldflags=cmd_ldflags,
+                                        cmd_libraries=cmd_libraries, target_file=target_file)
+        print(build_cmd)
 
-        run_command_line(build_cmd)
+        run_command_line(build_cmd, cwd=build_temp_dir)
+        _remove_dir(build_temp_dir)
 
     def build(self):
         if self.__name is None:
