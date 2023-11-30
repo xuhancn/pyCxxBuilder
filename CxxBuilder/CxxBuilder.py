@@ -83,6 +83,7 @@ class BuildTarget:
     __include_dirs = []
     __CFLAGS = []
     __LDFLAGS = []
+    __lib_dirs = []
     __libraries = []
     __build_directory = None
     __is_shared = False
@@ -130,6 +131,7 @@ class BuildTarget:
     def __prepare_build_parameters(self):
         cmd_include_dirs = ""
         cmd_libraries = ""
+        cmd_lib_dirs = ""
         cmd_definations = ""
         cmd_cflags = ""
         cmd_ldflags = ""
@@ -146,7 +148,14 @@ class BuildTarget:
                 if _IS_WINDOWS:
                     cmd_libraries += (f"{lib}.lib ")
                 else:
-                    cmd_libraries += (f"-L{lib} ")
+                    cmd_libraries += (f"-l{lib} ")
+
+        if len(self.__lib_dirs) != 0:
+            for lib_dir in self.__lib_dirs:
+                if _IS_WINDOWS:
+                    cmd_lib_dirs += (f"/LIBPATH:{lib_dir} ")
+                else:
+                    cmd_lib_dirs += (f"-L{lib_dir} ")
 
         if len(self.__definations) != 0:
             for defs in self.__definations:
@@ -169,7 +178,7 @@ class BuildTarget:
                 else:    
                     cmd_ldflags += (f"-{ldflag} ")
 
-        return cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags
+        return cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags, cmd_lib_dirs,
 
 
     def __compile(self, project_root, sources: list[str], cmd_include_dirs, cmd_definations, cmd_cflags, build_temp_dir):
@@ -212,20 +221,20 @@ class BuildTarget:
 
         return obj_list
 
-    def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, target_file) -> bool:
-        def _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, target_file):
+    def __link(self, obj_list: list[str], cmd_ldflags, cmd_libraries, cmd_lib_dirs, target_file) -> bool:
+        def _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, cmd_lib_dirs, target_file):
             if _IS_WINDOWS:
                 # https://stackoverflow.com/questions/2727187/creating-dll-and-lib-files-with-the-vc-command-line
-                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} /OUT:{target_file}"
+                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} {cmd_lib_dirs} /OUT:{target_file}"
                 cmd = cmd.replace("\\", "\\\\")
             else:
-                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+                cmd = f"{linker} {obj_list_str} {cmd_ldflags} {cmd_libraries} {cmd_lib_dirs} -o {target_file}"
             return cmd
         
         linker = _get_cxx_linker()
         obj_list_str = shlex.join(obj_list)
 
-        link_cmd = _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, target_file)
+        link_cmd = _format_link_cmd(linker, obj_list_str, cmd_ldflags, cmd_libraries, cmd_lib_dirs, target_file)
         print("!!! link cmd: ", link_cmd)
         run_command_line(link_cmd)
 
@@ -233,6 +242,14 @@ class BuildTarget:
     def add_sources(self, sources: list[str]):
         for i in sources:
             self.__sources.append(i)
+
+    def add_includes(self, includes: list[str]):
+        for i in includes:
+            self.__include_dirs.append(i)
+
+    def add_lib_dirs(self, lib_dirs: list[str]):
+        for i in lib_dirs:
+            self.__lib_dirs.append(i)
 
     def add_libraries(self, libraries: list[str]):
         for i in libraries:
@@ -300,28 +317,24 @@ class BuildTarget:
 
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
-        
+
         _create_if_dir_not_exist(build_root)
-        
-        print("target_file: ",target_file)
 
         compiler = _get_cxx_compiler()
-        cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags = self.__prepare_build_parameters()
+        cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags, cmd_lib_dirs = self.__prepare_build_parameters()
 
-        def format_build_command(compiler, src_file, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, target_file):
+        def format_build_command(compiler, src_file, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, cmd_lib_dirs, target_file):
+            srcs = " ".join(src_file)
             if _IS_WINDOWS:
                 # https://learn.microsoft.com/en-us/cpp/build/walkthrough-compile-a-c-program-on-the-command-line?view=msvc-1704
-                # https://stackoverflow.com/a/31566153 
-                srcs = ' '.join(src_file)
-                cmd = f"{compiler} {cmd_include_dirs} {cmd_definations} {cmd_cflags} {srcs} {cmd_ldflags} {cmd_libraries} /LD /Fe{target_file}"
+                # https://stackoverflow.com/a/31566153
+                cmd = f"{compiler} {cmd_include_dirs} {cmd_definations} {cmd_cflags} {srcs} {cmd_ldflags} {cmd_libraries} {cmd_lib_dirs} /LD /Fe{target_file}"
                 cmd = cmd.replace("\\", "\\\\")
             else:
-                cmd = f"{compiler} {cmd_include_dirs} {' '.join(src_file)} {cmd_definations} {cmd_cflags} {cmd_ldflags} {cmd_libraries} -o {target_file}"
+                cmd = f"{compiler} {cmd_include_dirs} {srcs} {cmd_definations} {cmd_cflags} {cmd_ldflags} {cmd_libraries} {cmd_lib_dirs} -o {target_file}"
             return cmd
         
-        build_cmd = format_build_command(compiler=compiler, src_file=self.__sources, cmd_include_dirs=cmd_include_dirs, 
-                                        cmd_definations=cmd_definations, cmd_cflags=cmd_cflags, cmd_ldflags=cmd_ldflags,
-                                        cmd_libraries=cmd_libraries, target_file=target_file)
+        build_cmd = format_build_command(compiler, self.__sources, cmd_include_dirs, cmd_definations, cmd_cflags, cmd_ldflags, cmd_libraries, cmd_lib_dirs, target_file)
         return build_cmd
 
     def build_one_step(self):
@@ -366,7 +379,7 @@ class BuildTarget:
         _create_if_dir_not_exist(build_root)
         _create_if_dir_not_exist(build_temp_dir)
 
-        cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags = self.__prepare_build_parameters()
+        cmd_include_dirs, cmd_libraries, cmd_definations, cmd_cflags, cmd_ldflags, cmd_lib_dirs = self.__prepare_build_parameters()
 
         obj_list = self.__compile(project_root = self.__project_root, 
                        sources=self.__sources, cmd_include_dirs=cmd_include_dirs, 
@@ -374,6 +387,6 @@ class BuildTarget:
 
         target_file = f"{self.__name}{file_ext}"
         target_file = os.path.join(build_root, target_file)
-        self.__link(obj_list=obj_list, cmd_ldflags=cmd_ldflags, cmd_libraries=cmd_libraries, target_file=target_file)
+        self.__link(obj_list=obj_list, cmd_ldflags=cmd_ldflags, cmd_libraries=cmd_libraries, cmd_lib_dirs=cmd_lib_dirs, target_file=target_file)
 
         _remove_dir(build_temp_dir)
